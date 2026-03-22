@@ -4,7 +4,7 @@ namespace GeoTracker.Api.Models
 {
     public class User
     {
-        [key]
+        [Key]
         public int Id {get; set;}
 
         [Required]

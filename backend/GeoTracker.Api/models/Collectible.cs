@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GeoTacker.Api.Models
+namespace GeoTracker.Api.Models
 {
-    public class Collectibles
+    public class Collectible
     {
-        [key]
+        [Key]
         public int Id {get; set;}
 
         [Required]
