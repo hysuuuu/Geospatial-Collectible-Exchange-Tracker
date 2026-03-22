@@ -28,9 +28,9 @@ namespace GeoTracker.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            var result = await _context.Users.FindAsync(id);
-            if (result == null) return NotFound();
-            return Ok(result);            
+            var tar = await _context.Users.FindAsync(id);
+            if (tar == null) return NotFound();
+            return Ok(tar);            
         }
 
         // Create new user
