@@ -2,6 +2,7 @@ using GeoTracker.Api.Data;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -14,6 +15,26 @@ namespace GeoTracker.Api.Controllers
         public CollectiblesController(AppDbContext context)
         {
             _context = context;
+        }
+
+        public class CreateCollectibleRequest
+        {
+            [Required]
+            [MaxLength(50)]
+            public string Name { get; set; } = string.Empty;
+
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
+        }
+
+        public class UpdateCollectibleRequest
+        {
+            [Required]
+            [MaxLength(50)]
+            public string Name { get; set; } = string.Empty;
+
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
         }
 
         // Get all collectibles
@@ -35,11 +56,33 @@ namespace GeoTracker.Api.Controllers
 
         // Create collectible
         [HttpPost]
-        public async Task<ActionResult<Collectible>> CreateCollectible(Collectible newColl)
+        public async Task<ActionResult<Collectible>> CreateCollectible(CreateCollectibleRequest request)
         {
+            var newColl = new Collectible
+            {
+                Name = request.Name,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude
+            };
+
             _context.Collectibles.Add(newColl);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetCollectible), new {id = newColl.Id}, newColl);
+        }
+
+        // Update collectible by id
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Collectible>> UpdateCollectible(int id, UpdateCollectibleRequest request)
+        {
+            var tar = await _context.Collectibles.FindAsync(id);
+            if (tar == null) return NotFound();
+
+            tar.Name = request.Name;
+            tar.Latitude = request.Latitude;
+            tar.Longitude = request.Longitude;
+
+            await _context.SaveChangesAsync();
+            return Ok(tar);
         }
 
         // Delete collectible by id

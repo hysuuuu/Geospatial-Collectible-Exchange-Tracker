@@ -2,6 +2,7 @@ using GeoTracker.Api.Data;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -16,6 +17,30 @@ namespace GeoTracker.Api.Controllers
             _context = context;
         }
 
+        public class CreateUserRequest
+        {
+            [Required]
+            [MaxLength(50)]
+            public string Username { get; set; } = string.Empty;
+
+            [Required]
+            [EmailAddress]
+            public string Email { get; set; } = string.Empty;
+
+            [Required]
+            public string Password { get; set; } = string.Empty;
+        }
+
+        public class UpdateUserRequest
+        {
+            [Required]
+            [MaxLength(50)]
+            public string Username { get; set; } = string.Empty;
+
+            [Required]
+            public string Password { get; set; } = string.Empty;
+        }
+        
         // Get all users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
@@ -35,12 +60,43 @@ namespace GeoTracker.Api.Controllers
 
         // Create new user
         [HttpPost]
-        public async Task<ActionResult<User>> CreateUser(User newUser)
+        public async Task<ActionResult<User>> CreateUser(CreateUserRequest request)
         {
+            var newUser = new User
+            {
+                Username = request.Username,
+                Email = request.Email,
+                Password = request.Password
+            };
+
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
             // return the newly created user's info
             return CreatedAtAction(nameof(GetUser), new {id = newUser.Id}, newUser);
+        }
+        
+        // Update user by id
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<User>> UpdateUser(int id, UpdateUserRequest request) 
+        {
+            var tar = await _context.Users.FindAsync(id);
+            if (tar == null) 
+            {
+                return NotFound();
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                tar.Username = request.Username;
+            }
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                tar.Password = request.Password;
+            }
+            
+            await _context.SaveChangesAsync();
+            return Ok(tar);
+
         }
 
         // Delete user
@@ -48,7 +104,10 @@ namespace GeoTracker.Api.Controllers
         public async Task<IActionResult> DeleteUser(int id)
         {
             var tar = await _context.Users.FindAsync(id);
-            if (tar == null) return NotFound();
+            if (tar == null) 
+            {
+                return NotFound();
+            }
 
             _context.Users.Remove(tar);
             await _context.SaveChangesAsync();
