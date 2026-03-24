@@ -1,8 +1,8 @@
 using GeoTracker.Api.Data;
+using GeoTracker.Api.DTOs.Users;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -16,46 +16,41 @@ namespace GeoTracker.Api.Controllers
         {
             _context = context;
         }
-
-        public class CreateUserRequest
-        {
-            [Required]
-            [MaxLength(50)]
-            public string Username { get; set; } = string.Empty;
-
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; } = string.Empty;
-
-            [Required]
-            public string Password { get; set; } = string.Empty;
-        }
-
-        public class UpdateUserRequest
-        {
-            [Required]
-            [MaxLength(50)]
-            public string Username { get; set; } = string.Empty;
-
-            [Required]
-            public string Password { get; set; } = string.Empty;
-        }
         
         // Get all users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
         {
-            var result = await _context.Users.ToListAsync();
-            return Ok(result);            
+            var responses = await _context.Users
+                .Select(user => new UserResponse
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(responses);
         }
 
         // Get user by id
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserResponse>> GetUserById(int id)
         {
-            var tar = await _context.Users.FindAsync(id);
-            if (tar == null) return NotFound();
-            return Ok(tar);            
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            var res = new UserResponse 
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt
+
+            };
+
+            return Ok(res);            
         }
 
         // Create new user
@@ -72,7 +67,7 @@ namespace GeoTracker.Api.Controllers
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
             // return the newly created user's info
-            return CreatedAtAction(nameof(GetUser), new {id = newUser.Id}, newUser);
+            return CreatedAtAction(nameof(GetUserById), new {id = newUser.Id}, newUser);
         }
         
         // Update user by id

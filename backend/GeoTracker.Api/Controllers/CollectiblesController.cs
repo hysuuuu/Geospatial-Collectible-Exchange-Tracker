@@ -1,8 +1,8 @@
 using GeoTracker.Api.Data;
+using GeoTracker.Api.DTOs.Collectibles;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -15,26 +15,6 @@ namespace GeoTracker.Api.Controllers
         public CollectiblesController(AppDbContext context)
         {
             _context = context;
-        }
-
-        public class CreateCollectibleRequest
-        {
-            [Required]
-            [MaxLength(50)]
-            public string Name { get; set; } = string.Empty;
-
-            public decimal Latitude { get; set; }
-            public decimal Longitude { get; set; }
-        }
-
-        public class UpdateCollectibleRequest
-        {
-            [Required]
-            [MaxLength(50)]
-            public string Name { get; set; } = string.Empty;
-
-            public decimal Latitude { get; set; }
-            public decimal Longitude { get; set; }
         }
 
         // Get all collectibles

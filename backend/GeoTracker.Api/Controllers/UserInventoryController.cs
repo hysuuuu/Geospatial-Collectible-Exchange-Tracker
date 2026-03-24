@@ -1,4 +1,5 @@
 using GeoTracker.Api.Data;
+using GeoTracker.Api.DTOs.UserInventory;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,18 +15,6 @@ namespace GeoTracker.Api.Controllers
         public UserInventoryController(AppDbContext context)
         {
             _context = context;
-        }
-
-        public class CreateUserInventoryRequest
-        {
-            public int UserId { get; set; }
-            public int CollectibleId { get; set; }
-            public int Quantity { get; set; } = 1;
-        }
-
-        public class UpdateUserInventoryQuantityRequest
-        {
-            public int Quantity { get; set; }
         }
 
         // Get all inventory rows
