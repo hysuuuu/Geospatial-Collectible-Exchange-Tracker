@@ -4,6 +4,7 @@ using GeoTracker.Api.DTOs.UserInventory;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -91,6 +92,33 @@ namespace GeoTracker.Api.Controllers
             return Ok(result);
         }
 
+        // Get all inventory rows for a collectible
+        [HttpGet("collectibles/{collectibleId}")]
+        public async Task<ActionResult<IEnumerable<UserInventoryResponse>>> GetInventoryByCollectibleId(int collectibleId)
+        {
+            var collectibleExists = await _context.Collectibles.AnyAsync(c => c.Id == collectibleId);
+            if (!collectibleExists)
+            {
+                return NotFound(ErrorResponse(404, "Not Found", $"Collectible {collectibleId} not found."));
+            }
+
+            var result = await _context.UserInventories
+                .Where(ui => ui.CollectibleId == collectibleId)
+                .Select(ui => new UserInventoryResponse
+                {
+                    Id = ui.Id,
+                    UserId = ui.UserId,
+                    Username = ui.User.Username,
+                    CollectibleId = ui.CollectibleId,
+                    CollectibleName = ui.Collectible.Name,
+                    Quantity = ui.Quantity,
+                    GetAt = ui.GetAt
+                })
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
         // Add collectible to user inventory.
         // If row already exists for user+collectible, quantity is incremented.
         [HttpPost]
@@ -145,19 +173,28 @@ namespace GeoTracker.Api.Controllers
             return CreatedAtAction(nameof(GetInventoryById), new { id = newInventory.Id }, ToUserInventoryResponse(newInventory));
         }
 
-        // Update quantity by inventory id
-        [HttpPut("{id}")]
-        public async Task<ActionResult<UserInventoryResponse>> UpdateInventoryQuantity(int id, UpdateUserInventoryQuantityRequest request)
+        // Update quantity by userId and collectibleId
+        // [Authorize]
+        [HttpPut("{userId}/collectibles/{collectibleId}")]
+        public async Task<ActionResult<UserInventoryResponse>> UpdateInventoryQuantity(int userId, int collectibleId, UpdateUserInventoryQuantityRequest request)
         {
+            // var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            // {
+            //     return Unauthorized(ErrorResponse(400, "Invalid token", "Invalid token."));
+            // }
+
             if (request.Quantity <= 0)
             {
                 return BadRequest(ErrorResponse(400, "Bad Request", "Quantity must be greater than 0."));
             }
 
-            var inventory = await _context.UserInventories.FindAsync(id);
+            var inventory = await _context.UserInventories
+                .FirstOrDefaultAsync(ui => ui.UserId == userId && ui.CollectibleId == collectibleId);
             if (inventory == null)
             {
-                return NotFound(ErrorResponse(404, "Not Found", $"Inventory {id} not found."));
+                return NotFound(ErrorResponse(404, "Not Found", $"Inventory {userId} not found."));
             }
 
             inventory.Quantity = request.Quantity;
