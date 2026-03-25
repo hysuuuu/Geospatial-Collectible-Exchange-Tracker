@@ -1,4 +1,5 @@
 using GeoTracker.Api.Data;
+using GeoTracker.Api.DTOs.Errors;
 using GeoTracker.Api.DTOs.Users;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,10 @@ namespace GeoTracker.Api.Controllers
         public async Task<ActionResult<UserResponse>> GetUserById(int id)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            if (user == null)
+            {
+                return NotFound(ErrorResponse(404, "Not Found", $"User {id} not found."));
+            }
 
             var res = ToUserResponse(user);
             return Ok(res);            
@@ -69,7 +73,7 @@ namespace GeoTracker.Api.Controllers
             var tar = await _context.Users.FindAsync(id);
             if (tar == null) 
             {
-                return NotFound();
+                return NotFound(ErrorResponse(404, "Not Found", $"User {id} not found."));
             }
 
             if (!string.IsNullOrWhiteSpace(request.Username))
@@ -95,7 +99,7 @@ namespace GeoTracker.Api.Controllers
             var tar = await _context.Users.FindAsync(id);
             if (tar == null) 
             {
-                return NotFound();
+                return NotFound(ErrorResponse(404, "Not Found", $"User {id} not found."));
             }
 
             _context.Users.Remove(tar);
@@ -112,6 +116,11 @@ namespace GeoTracker.Api.Controllers
                 Email = user.Email,
                 CreatedAt = user.CreatedAt
             };
+        }
+
+        private ApiErrorResponse ErrorResponse(int statusCode, string error, string message)
+        {
+            return ApiErrorFactory.Create(statusCode, error, message, HttpContext?.Request?.Path.Value);
         }
     }
 }

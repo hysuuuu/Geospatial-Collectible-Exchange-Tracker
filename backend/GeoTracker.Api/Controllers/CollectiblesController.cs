@@ -1,5 +1,6 @@
 using GeoTracker.Api.Data;
 using GeoTracker.Api.DTOs.Collectibles;
+using GeoTracker.Api.DTOs.Errors;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +41,10 @@ namespace GeoTracker.Api.Controllers
         public async Task<ActionResult<CollectibleResponse>> GetCollectibleById(int id)
         {
             var tar = await _context.Collectibles.FindAsync(id);
-            if (tar == null) return NotFound();
+            if (tar == null)
+            {
+                return NotFound(ErrorResponse(404, "Not Found", $"Collectible {id} not found."));
+            }
 
             var response = ToCollectibleResponse(tar);
             return Ok(response);
@@ -67,7 +71,10 @@ namespace GeoTracker.Api.Controllers
         public async Task<ActionResult<CollectibleResponse>> UpdateCollectible(int id, UpdateCollectibleRequest request)
         {
             var tar = await _context.Collectibles.FindAsync(id);
-            if (tar == null) return NotFound();
+            if (tar == null)
+            {
+                return NotFound(ErrorResponse(404, "Not Found", $"Collectible {id} not found."));
+            }
 
             tar.Name = request.Name;
             tar.Latitude = request.Latitude;
@@ -84,7 +91,10 @@ namespace GeoTracker.Api.Controllers
         public async Task<IActionResult> DeleteCollectible(int id)
         {
             var tar = await _context.Collectibles.FindAsync(id);
-            if (tar == null) return NotFound();
+            if (tar == null)
+            {
+                return NotFound(ErrorResponse(404, "Not Found", $"Collectible {id} not found."));
+            }
 
             _context.Collectibles.Remove(tar);
             await _context.SaveChangesAsync();
@@ -101,6 +111,11 @@ namespace GeoTracker.Api.Controllers
                 Longitude = collectible.Longitude,
                 CreatedAt = collectible.CreatedAt
             };
+        }
+
+        private ApiErrorResponse ErrorResponse(int statusCode, string error, string message)
+        {
+            return ApiErrorFactory.Create(statusCode, error, message, HttpContext?.Request?.Path.Value);
         }
     }    
 }
