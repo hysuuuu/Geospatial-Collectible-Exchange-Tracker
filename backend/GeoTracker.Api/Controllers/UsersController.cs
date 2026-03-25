@@ -4,6 +4,7 @@ using GeoTracker.Api.DTOs.Users;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using BCrypt.Net;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -57,7 +58,7 @@ namespace GeoTracker.Api.Controllers
             {
                 Username = request.Username,
                 Email = request.Email,
-                Password = request.Password
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password)
             };
 
             _context.Users.Add(newUser);
@@ -68,7 +69,7 @@ namespace GeoTracker.Api.Controllers
         
         // Update user by id
         [HttpPatch("{id}")]
-        public async Task<ActionResult<User>> UpdateUser(int id, UpdateUserRequest request) 
+        public async Task<ActionResult<UserResponse>> UpdateUser(int id, UpdateUserRequest request) 
         {
             var tar = await _context.Users.FindAsync(id);
             if (tar == null) 
@@ -82,7 +83,7 @@ namespace GeoTracker.Api.Controllers
             }
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
-                tar.Password = request.Password;
+                tar.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
             }
             
             await _context.SaveChangesAsync();
