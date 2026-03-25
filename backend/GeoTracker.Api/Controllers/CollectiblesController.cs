@@ -19,19 +19,31 @@ namespace GeoTracker.Api.Controllers
 
         // Get all collectibles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Collectible>>> GetCollectibles()
+        public async Task<ActionResult<IEnumerable<CollectibleResponse>>> GetCollectibles()
         {
-            var result = await _context.Collectibles.ToListAsync();
-            return Ok(result);
+            var response = await _context.Collectibles
+                .Select(c => new CollectibleResponse
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Latitude = c.Latitude,
+                    Longitude = c.Longitude,
+                    CreatedAt = c.CreatedAt
+                })
+                .ToListAsync();
+            
+            return Ok(response);
         }
 
         // Get collectible by id
         [HttpGet("{id}")]
-        public async Task<ActionResult<Collectible>> GetCollectible(int id)
+        public async Task<ActionResult<CollectibleResponse>> GetCollectibleById(int id)
         {
             var tar = await _context.Collectibles.FindAsync(id);
             if (tar == null) return NotFound();
-            return Ok(tar);
+
+            var response = ToCollectibleResponse(tar);
+            return Ok(response);
         }
 
         // Create collectible
@@ -47,12 +59,12 @@ namespace GeoTracker.Api.Controllers
 
             _context.Collectibles.Add(newColl);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetCollectible), new {id = newColl.Id}, newColl);
+            return CreatedAtAction(nameof(GetCollectibleById), new {id = newColl.Id}, newColl);
         }
 
         // Update collectible by id
         [HttpPut("{id}")]
-        public async Task<ActionResult<Collectible>> UpdateCollectible(int id, UpdateCollectibleRequest request)
+        public async Task<ActionResult<CollectibleResponse>> UpdateCollectible(int id, UpdateCollectibleRequest request)
         {
             var tar = await _context.Collectibles.FindAsync(id);
             if (tar == null) return NotFound();
@@ -62,7 +74,9 @@ namespace GeoTracker.Api.Controllers
             tar.Longitude = request.Longitude;
 
             await _context.SaveChangesAsync();
-            return Ok(tar);
+
+            var response = ToCollectibleResponse(tar);
+            return Ok(response);
         }
 
         // Delete collectible by id
@@ -77,7 +91,16 @@ namespace GeoTracker.Api.Controllers
             return NoContent();
         }
 
-
-    }
-    
+        private static CollectibleResponse ToCollectibleResponse(Collectible collectible)
+        {
+            return new CollectibleResponse
+            {
+                Id = collectible.Id,
+                Name = collectible.Name,
+                Latitude = collectible.Latitude,
+                Longitude = collectible.Longitude,
+                CreatedAt = collectible.CreatedAt
+            };
+        }
+    }    
 }

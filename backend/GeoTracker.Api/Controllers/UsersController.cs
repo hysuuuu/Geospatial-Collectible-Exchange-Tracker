@@ -21,7 +21,7 @@ namespace GeoTracker.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
         {
-            var responses = await _context.Users
+            var response = await _context.Users
                 .Select(user => new UserResponse
                 {
                     Id = user.Id,
@@ -31,7 +31,7 @@ namespace GeoTracker.Api.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(responses);
+            return Ok(response);
         }
 
         // Get user by id
@@ -41,15 +41,7 @@ namespace GeoTracker.Api.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
 
-            var res = new UserResponse 
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                CreatedAt = user.CreatedAt
-
-            };
-
+            var res = ToUserResponse(user);
             return Ok(res);            
         }
 
@@ -90,7 +82,9 @@ namespace GeoTracker.Api.Controllers
             }
             
             await _context.SaveChangesAsync();
-            return Ok(tar);
+
+            var response = ToUserResponse(tar);
+            return Ok(response);
 
         }
 
@@ -107,6 +101,17 @@ namespace GeoTracker.Api.Controllers
             _context.Users.Remove(tar);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        private static UserResponse ToUserResponse(User user)
+        {
+            return new UserResponse
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt
+            };
         }
     }
 }
