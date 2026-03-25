@@ -8,7 +8,7 @@ namespace GeoTracker.Api.DTOs.Users
         [MaxLength(50)]
         public string Username { get; set; } = string.Empty;
 
-        [Required]
+        // [Required]
         public string Password { get; set; } = string.Empty;
     }
 }
