@@ -21,14 +21,9 @@ namespace GeoTracker.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
         {
-            var response = await _userRepo.GetAllAsync(user => new UserResponse
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                CreatedAt = user.CreatedAt
-            });
+            var users = await _userRepo.GetAllAsync();
 
+            var response = users.Select(u => ToUserResponse(u)).ToList();            
             return Ok(response);
         }
 
@@ -42,7 +37,7 @@ namespace GeoTracker.Api.Controllers
                 return NotFound(ErrorResponse(404, "Not Found", $"User {id} not found."));
             }
 
-            var res = ToUserResponse(user);
+            var res = ToUserResponse(user);            
             return Ok(res);
         }
 
@@ -50,7 +45,12 @@ namespace GeoTracker.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<UserResponse>> CreateUser(CreateUserRequest request)
         {
+            if (!ModelState.IsValid) {
+                return BadRequest(ModelState);
+            }
+
             var newUser = await _userRepo.CreateAsync(request);
+            
             var response = ToUserResponse(newUser);
             // return the newly created user's info
             return CreatedAtAction(nameof(GetUserById), new {id = newUser.Id}, response);
@@ -60,6 +60,10 @@ namespace GeoTracker.Api.Controllers
         [HttpPatch("{id}")]
         public async Task<ActionResult<UserResponse>> UpdateUser(int id, UpdateUserRequest request) 
         {
+            if (!ModelState.IsValid) {
+                return BadRequest(ModelState);
+            }
+
             var tar = await _userRepo.GetByIdAsync(id);
             if (tar == null)
             {
@@ -71,7 +75,7 @@ namespace GeoTracker.Api.Controllers
             {
                 return StatusCode(500, ErrorResponse(500, "Internal Server Error", "Failed to delete user."));
             }
-            
+
             var response = ToUserResponse(tar);
             return Ok(response);
         }
@@ -80,6 +84,10 @@ namespace GeoTracker.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
+            if (!ModelState.IsValid) {
+                return BadRequest(ModelState);
+            }
+            
             var tar = await _userRepo.GetByIdAsync(id);
             if (tar == null)
             {

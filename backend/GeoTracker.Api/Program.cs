@@ -52,6 +52,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICollectibleRepository, CollectibleRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 
 var app = builder.Build();

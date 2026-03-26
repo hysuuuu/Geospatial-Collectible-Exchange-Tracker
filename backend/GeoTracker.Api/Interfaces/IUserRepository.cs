@@ -10,7 +10,8 @@ namespace GeoTracker.Api.Interfaces
 {
     public interface IUserRepository
     {
-        public Task<List<T>> GetAllAsync<T>(Expression<Func<User, T>> selector);
+        // public Task<List<T>> GetAllAsync<T>(Expression<Func<User, T>> selector);
+        public Task<List<User>> GetAllAsync();
 
         public Task<User?> GetByIdAsync(int id);
 

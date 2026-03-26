@@ -17,11 +17,11 @@ namespace GeoTracker.Api.Repository
         public UserRepository(AppDbContext context)
         {
             _context = context;
-        }        
+        }       
 
-        public Task<List<T>> GetAllAsync<T>(Expression<Func<User, T>> selector)
+        public Task<List<User>> GetAllAsync()
         {
-            return _context.Users.Select(selector).ToListAsync();
+            return _context.Users.ToListAsync();
         }
 
         public async Task<User?> GetByIdAsync(int id)
