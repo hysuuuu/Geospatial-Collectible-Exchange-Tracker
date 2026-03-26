@@ -10,7 +10,7 @@ namespace GeoTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController] 
-    public class UsersController : ControllerBase
+    public class UsersController : BaseApiController
     {
         private readonly AppDbContext _context;
 
@@ -117,11 +117,6 @@ namespace GeoTracker.Api.Controllers
                 Email = user.Email,
                 CreatedAt = user.CreatedAt
             };
-        }
-
-        private ApiErrorResponse ErrorResponse(int statusCode, string error, string message)
-        {
-            return ApiErrorFactory.Create(statusCode, error, message, HttpContext?.Request?.Path.Value);
         }
     }
 }

@@ -10,7 +10,7 @@ namespace GeoTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController] 
-    public class UserInventoryController : ControllerBase
+    public class UserInventoryController : BaseApiController
     {
         private readonly AppDbContext _context;
 
@@ -234,11 +234,6 @@ namespace GeoTracker.Api.Controllers
                 Quantity = inventory.Quantity,
                 GetAt = inventory.GetAt
             };
-        }
-
-        private ApiErrorResponse ErrorResponse(int statusCode, string error, string message)
-        {
-            return ApiErrorFactory.Create(statusCode, error, message, HttpContext?.Request?.Path.Value);
         }
     }
 }

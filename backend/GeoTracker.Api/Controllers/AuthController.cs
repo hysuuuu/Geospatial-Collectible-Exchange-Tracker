@@ -12,7 +12,7 @@ namespace GeoTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController] 
-    public class AuthController : ControllerBase
+    public class AuthController : BaseApiController
     {
         private readonly AppDbContext _context;
         private readonly IJwtService _jwtService;
@@ -48,11 +48,6 @@ namespace GeoTracker.Api.Controllers
                 }
             };
             return Ok(response);            
-        }
-
-        private ApiErrorResponse ErrorResponse(int statusCode, string error, string message)
-        {
-            return ApiErrorFactory.Create(statusCode, error, message, HttpContext?.Request?.Path.Value);
         }
     }    
 }
