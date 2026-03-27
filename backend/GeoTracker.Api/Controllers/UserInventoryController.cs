@@ -1,9 +1,9 @@
 using GeoTracker.Api.Data;
 using GeoTracker.Api.DTOs.Errors;
 using GeoTracker.Api.DTOs.UserInventory;
+using GeoTracker.Api.Interfaces;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace GeoTracker.Api.Controllers
@@ -12,29 +12,19 @@ namespace GeoTracker.Api.Controllers
     [ApiController] 
     public class UserInventoryController : BaseApiController
     {
-        private readonly AppDbContext _context;
+        private readonly IUserInventoryRepository _repo;
 
-        public UserInventoryController(AppDbContext context)
+        public UserInventoryController(IUserInventoryRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         // Get all inventory rows
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserInventoryResponse>>> GetInventory()
         {
-            var result = await _context.UserInventories
-                .Select(ui => new UserInventoryResponse
-                {
-                    Id = ui.Id,
-                    UserId = ui.UserId,
-                    Username = ui.User.Username,
-                    CollectibleId = ui.CollectibleId,
-                    CollectibleName = ui.Collectible.Name,
-                    Quantity = ui.Quantity,
-                    GetAt = ui.GetAt
-                })
-                .ToListAsync();
+            var inventories = await _repo.GetAllAsync();
+            var result = inventories.Select(ui => ToUserInventoryResponse(ui)).ToList();
 
             return Ok(result);
         }
@@ -43,51 +33,28 @@ namespace GeoTracker.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<UserInventoryResponse>> GetInventoryById(int id)
         {
-            var inventory = await _context.UserInventories
-                .Where(ui => ui.Id == id)
-                .Select(ui => new UserInventoryResponse
-                {
-                    Id = ui.Id,
-                    UserId = ui.UserId,
-                    Username = ui.User.Username,
-                    CollectibleId = ui.CollectibleId,
-                    CollectibleName = ui.Collectible.Name,
-                    Quantity = ui.Quantity,
-                    GetAt = ui.GetAt
-                })
-                .FirstOrDefaultAsync();
+            var inventory = await _repo.GetByIdAsync(id);
 
             if (inventory == null)
             {
                 return NotFound(ErrorResponse(404, "Not Found", $"Inventory {id} not found."));
             }
 
-            return Ok(inventory);
+            return Ok(ToUserInventoryResponse(inventory));
         }
 
         // Get all inventory rows for a user
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<UserInventoryResponse>>> GetInventoryByUserId(int userId)
         {
-            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+            var userExists = await _repo.UserExistsAsync(userId);
             if (!userExists)
             {
                 return NotFound(ErrorResponse(404, "Not Found", $"User {userId} not found."));
             }
 
-            var result = await _context.UserInventories
-                .Where(ui => ui.UserId == userId)
-                .Select(ui => new UserInventoryResponse
-                {
-                    Id = ui.Id,
-                    UserId = ui.UserId,
-                    Username = ui.User.Username,
-                    CollectibleId = ui.CollectibleId,
-                    CollectibleName = ui.Collectible.Name,
-                    Quantity = ui.Quantity,
-                    GetAt = ui.GetAt
-                })
-                .ToListAsync();
+            var inventories = await _repo.GetByUserIdAsync(userId);
+            var result = inventories.Select(ui => ToUserInventoryResponse(ui)).ToList();
 
             return Ok(result);
         }
@@ -96,25 +63,14 @@ namespace GeoTracker.Api.Controllers
         [HttpGet("collectibles/{collectibleId}")]
         public async Task<ActionResult<IEnumerable<UserInventoryResponse>>> GetInventoryByCollectibleId(int collectibleId)
         {
-            var collectibleExists = await _context.Collectibles.AnyAsync(c => c.Id == collectibleId);
+            var collectibleExists = await _repo.CollectibleExistsAsync(collectibleId);
             if (!collectibleExists)
             {
                 return NotFound(ErrorResponse(404, "Not Found", $"Collectible {collectibleId} not found."));
             }
 
-            var result = await _context.UserInventories
-                .Where(ui => ui.CollectibleId == collectibleId)
-                .Select(ui => new UserInventoryResponse
-                {
-                    Id = ui.Id,
-                    UserId = ui.UserId,
-                    Username = ui.User.Username,
-                    CollectibleId = ui.CollectibleId,
-                    CollectibleName = ui.Collectible.Name,
-                    Quantity = ui.Quantity,
-                    GetAt = ui.GetAt
-                })
-                .ToListAsync();
+            var inventories = await _repo.GetByCollectibleIdAsync(collectibleId);
+            var result = inventories.Select(ui => ToUserInventoryResponse(ui)).ToList();
 
             return Ok(result);
         }
@@ -129,47 +85,20 @@ namespace GeoTracker.Api.Controllers
                 return BadRequest(ErrorResponse(400, "Bad Request", "Quantity must be greater than 0."));
             }
 
-            var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
+            var userExists = await _repo.UserExistsAsync(request.UserId);
             if (!userExists)
             {
                 return BadRequest(ErrorResponse(400, "Bad Request", $"User {request.UserId} does not exist."));
             }
 
-            var collectibleExists = await _context.Collectibles.AnyAsync(c => c.Id == request.CollectibleId);
+            var collectibleExists = await _repo.CollectibleExistsAsync(request.CollectibleId);
             if (!collectibleExists)
             {
                 return BadRequest(ErrorResponse(400, "Bad Request", $"Collectible {request.CollectibleId} does not exist."));
             }
 
-            var existing = await _context.UserInventories
-                .FirstOrDefaultAsync(ui => ui.UserId == request.UserId && ui.CollectibleId == request.CollectibleId);
-
-            if (existing != null)
-            {
-                existing.Quantity += request.Quantity;
-                existing.GetAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-
-                await _context.Entry(existing).Reference(ui => ui.User).LoadAsync();
-                await _context.Entry(existing).Reference(ui => ui.Collectible).LoadAsync();
-
-                return Ok(ToUserInventoryResponse(existing));
-            }
-
-            var newInventory = new UserInventory
-            {
-                UserId = request.UserId,
-                CollectibleId = request.CollectibleId,
-                Quantity = request.Quantity,
-                GetAt = DateTime.UtcNow
-            };
-
-            _context.UserInventories.Add(newInventory);
-            await _context.SaveChangesAsync();
-
-            await _context.Entry(newInventory).Reference(ui => ui.User).LoadAsync();
-            await _context.Entry(newInventory).Reference(ui => ui.Collectible).LoadAsync();
-
+            var newInventory = await _repo.CreateAsync(request);
+            
             return CreatedAtAction(nameof(GetInventoryById), new { id = newInventory.Id }, ToUserInventoryResponse(newInventory));
         }
 
@@ -190,18 +119,13 @@ namespace GeoTracker.Api.Controllers
                 return BadRequest(ErrorResponse(400, "Bad Request", "Quantity must be greater than 0."));
             }
 
-            var inventory = await _context.UserInventories
-                .FirstOrDefaultAsync(ui => ui.UserId == userId && ui.CollectibleId == collectibleId);
+            var inventory = await _repo.GetByUserIdAndCollectibleIdAsync(userId, collectibleId);
             if (inventory == null)
             {
                 return NotFound(ErrorResponse(404, "Not Found", $"Inventory {userId} not found."));
             }
 
-            inventory.Quantity = request.Quantity;
-            await _context.SaveChangesAsync();
-
-            await _context.Entry(inventory).Reference(ui => ui.User).LoadAsync();
-            await _context.Entry(inventory).Reference(ui => ui.Collectible).LoadAsync();
+            await _repo.UpdateAsync(inventory, request);
 
             return Ok(ToUserInventoryResponse(inventory));
         }
@@ -210,14 +134,13 @@ namespace GeoTracker.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteInventory(int id)
         {
-            var inventory = await _context.UserInventories.FindAsync(id);
+            var inventory = await _repo.GetByIdAsync(id);
             if (inventory == null)
             {
                 return NotFound(ErrorResponse(404, "Not Found", $"Inventory {id} not found."));
             }
 
-            _context.UserInventories.Remove(inventory);
-            await _context.SaveChangesAsync();
+            await _repo.DeleteAsync(inventory);
 
             return NoContent();
         }
