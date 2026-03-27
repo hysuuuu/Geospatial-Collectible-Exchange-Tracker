@@ -3,6 +3,7 @@ using GeoTracker.Api.DTOs.Errors;
 using GeoTracker.Api.DTOs.UserInventory;
 using GeoTracker.Api.Interfaces;
 using GeoTracker.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -77,9 +78,21 @@ namespace GeoTracker.Api.Controllers
 
         // Add collectible to user inventory.
         // If row already exists for user+collectible, quantity is incremented.
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<UserInventoryResponse>> CreateInventory(CreateUserInventoryRequest request)
         {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(ErrorResponse(401, "Invalid token", "User ID claim is missing or invalid."));
+            }
+            if (currentUserId != request.UserId)
+            {
+                return StatusCode(403, ErrorResponse(403, "Forbidden", "You do not have permission to create invetory for this user."));
+            }
+
             if (request.Quantity <= 0)
             {
                 return BadRequest(ErrorResponse(400, "Bad Request", "Quantity must be greater than 0."));
@@ -103,16 +116,20 @@ namespace GeoTracker.Api.Controllers
         }
 
         // Update quantity by userId and collectibleId
-        // [Authorize]
+        [Authorize]
         [HttpPut("{userId}/collectibles/{collectibleId}")]
         public async Task<ActionResult<UserInventoryResponse>> UpdateInventoryQuantity(int userId, int collectibleId, UpdateUserInventoryQuantityRequest request)
         {
-            // var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            // {
-            //     return Unauthorized(ErrorResponse(400, "Invalid token", "Invalid token."));
-            // }
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(ErrorResponse(401, "Invalid token", "User ID claim is missing or invalid."));
+            }
+            if (currentUserId != userId)
+            {
+                return StatusCode(403, ErrorResponse(403, "Forbidden", "You do not have permission to update this inventory."));
+            }
 
             if (request.Quantity <= 0)
             {
@@ -131,13 +148,25 @@ namespace GeoTracker.Api.Controllers
         }
 
         // Delete inventory row by id
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteInventory(int id)
+        [Authorize]
+        [HttpDelete("{inventoryId}")]
+        public async Task<IActionResult> DeleteInventory(int inventoryId)
         {
-            var inventory = await _repo.GetByIdAsync(id);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(ErrorResponse(401, "Invalid token", "User ID claim is missing or invalid."));
+            }
+    
+            var inventory = await _repo.GetByIdAsync(inventoryId);
             if (inventory == null)
             {
-                return NotFound(ErrorResponse(404, "Not Found", $"Inventory {id} not found."));
+                return NotFound(ErrorResponse(404, "Not Found", $"Inventory {inventoryId} not found."));
+            }
+            if (currentUserId != inventory.UserId)
+            {
+                return StatusCode(403, ErrorResponse(403, "Forbidden", "You do not have permission to delete this inventory."));
             }
 
             await _repo.DeleteAsync(inventory);

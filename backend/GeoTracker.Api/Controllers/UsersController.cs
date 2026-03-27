@@ -3,6 +3,8 @@ using GeoTracker.Api.DTOs.Users;
 using GeoTracker.Api.Models;
 using GeoTracker.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace GeoTracker.Api.Controllers
 {
@@ -57,11 +59,23 @@ namespace GeoTracker.Api.Controllers
         }
         
         // Update user by id
+        [Authorize]
         [HttpPatch("{id}")]
         public async Task<ActionResult<UserResponse>> UpdateUser(int id, UpdateUserRequest request) 
         {
             if (!ModelState.IsValid) {
                 return BadRequest(ModelState);
+            }
+
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(ErrorResponse(401, "Invalid token", "User ID claim is missing or invalid."));
+            }
+            if (currentUserId != id) 
+            {
+                return StatusCode(403, ErrorResponse(403, "Forbidden", "You can only update your own account."));
             }
 
             var tar = await _userRepo.GetByIdAsync(id);
@@ -81,11 +95,23 @@ namespace GeoTracker.Api.Controllers
         }
 
         // Delete user
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             if (!ModelState.IsValid) {
                 return BadRequest(ModelState);
+            }
+
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(ErrorResponse(401, "Invalid token", "User ID claim is missing or invalid."));
+            }
+            if (currentUserId != id) 
+            {
+                return StatusCode(403, ErrorResponse(403, "Forbidden", "You can only delete your own account."));
             }
             
             var tar = await _userRepo.GetByIdAsync(id);
