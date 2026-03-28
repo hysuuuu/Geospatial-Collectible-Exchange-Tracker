@@ -16,7 +16,7 @@ DB_USER="${POSTGRES_USER:-postgres}"
 DB_PASSWORD="${POSTGRES_PASSWORD:-password}"
 DB_NAME="${POSTGRES_DB:-geotrackerdb}"
 DB_PORT="${POSTGRES_PORT:-5432}"
-DB_IMAGE="${POSTGRES_IMAGE:-postgres:16}"
+DB_IMAGE="${POSTGRES_IMAGE:-postgis/postgis:16-3.4}"
 CREATE_IF_MISSING="true"
 
 usage() {

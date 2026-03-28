@@ -7,6 +7,7 @@ using GeoTracker.Api.DTOs.Collectibles;
 using GeoTracker.Api.Interfaces;
 using GeoTracker.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 
 namespace GeoTracker.Api.Repository
 {
@@ -33,8 +34,7 @@ namespace GeoTracker.Api.Repository
             var newColl = new Collectible
             {
                 Name = request.Name,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude
+                Location = new Point((double)request.Latitude, (double)request.Longitude) { SRID = 4326 }
             };
 
             await _context.Collectibles.AddAsync(newColl);
@@ -46,8 +46,7 @@ namespace GeoTracker.Api.Repository
         public async Task<bool> UpdateAsync(Collectible collectible, UpdateCollectibleRequest request)
         {
             collectible.Name = request.Name;
-            collectible.Latitude = request.Latitude;
-            collectible.Longitude = request.Longitude;
+            collectible.Location = new Point((double)request.Latitude, (double)request.Longitude) { SRID = 4326 };
 
             var affectedRows = await _context.SaveChangesAsync();            
             return affectedRows > 0;

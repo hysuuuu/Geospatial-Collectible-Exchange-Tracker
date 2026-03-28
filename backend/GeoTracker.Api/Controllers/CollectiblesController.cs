@@ -46,11 +46,13 @@ namespace GeoTracker.Api.Controllers
 
         // Create collectible
         [HttpPost]
-        public async Task<ActionResult<Collectible>> CreateCollectible(CreateCollectibleRequest request)
+        public async Task<ActionResult<CollectibleResponse>> CreateCollectible(CreateCollectibleRequest request)
         {
             var newColl = await _collectibleRepo.CreateAsync(request);
+
+            var response = ToCollectibleResponse(newColl);
             
-            return CreatedAtAction(nameof(GetCollectibleById), new {id = newColl.Id}, newColl);
+            return CreatedAtAction(nameof(GetCollectibleById), new {id = newColl.Id}, response);
         }
 
         // Update collectible by id
@@ -98,8 +100,8 @@ namespace GeoTracker.Api.Controllers
             {
                 Id = collectible.Id,
                 Name = collectible.Name,
-                Latitude = collectible.Latitude,
-                Longitude = collectible.Longitude,
+                Latitude = (decimal)collectible.Location.Y,
+                Longitude = (decimal)collectible.Location.X,
                 CreatedAt = collectible.CreatedAt
             };
         }

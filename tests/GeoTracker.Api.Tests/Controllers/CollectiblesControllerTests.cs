@@ -6,6 +6,7 @@ using GeoTracker.Api.Interfaces;
 using GeoTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using NetTopologySuite.Geometries;
 
 namespace GeoTracker.Api.Tests.Controllers;
 
@@ -15,8 +16,7 @@ public class CollectiblesControllerTests
     {
         Id = id,
         Name = $"Coll-{id}",
-        Latitude = 25.0m + id,
-        Longitude = 121.0m + id,
+        Location = new Point(121.0 + id, 25.0 + id) { SRID = 4326 },
         CreatedAt = DateTime.UtcNow
     };
 
@@ -66,8 +66,8 @@ public class CollectiblesControllerTests
     [Fact]
     public async Task CreateCollectible_ShouldReturnCreatedAtAction()
     {
-        var request = new CreateCollectibleRequest { Name = "A", Latitude = 1, Longitude = 2 };
-        var created = new Collectible { Id = 100, Name = "A", Latitude = 1, Longitude = 2 };
+        var request = new CreateCollectibleRequest { Name = "A", Location = new Point(2, 1) { SRID = 4326 } };
+        var created = new Collectible { Id = 100, Name = "A", Location = new Point(2, 1) { SRID = 4326 } };
 
         var repo = new Mock<ICollectibleRepository>();
         repo.Setup(r => r.CreateAsync(request)).ReturnsAsync(created);
@@ -118,7 +118,7 @@ public class CollectiblesControllerTests
 
         var controller = new CollectiblesController(repo.Object);
 
-        var result = await controller.UpdateCollectible(3, new UpdateCollectibleRequest { Name = "U", Latitude = 2, Longitude = 3 });
+        var result = await controller.UpdateCollectible(3, new UpdateCollectibleRequest { Name = "U", Location = new Point(3, 2) { SRID = 4326 } });
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.Value.Should().BeOfType<CollectibleResponse>();

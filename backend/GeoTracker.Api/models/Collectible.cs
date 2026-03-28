@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NetTopologySuite.Geometries;
 
 namespace GeoTracker.Api.Models
 {
@@ -12,11 +13,8 @@ namespace GeoTracker.Api.Models
         [MaxLength(50)]
         public string Name {get; set;} = string.Empty;
 
-        [Column(TypeName = "decimal(9,6)")]
-        public decimal Latitude {get; set;}
-
-        [Column(TypeName = "decimal(9,6)")]
-        public decimal Longitude {get; set;}
+        [Column(TypeName = "geometry(Point, 4326)")]
+        public Point Location { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
