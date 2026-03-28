@@ -66,7 +66,7 @@ public class CollectiblesControllerTests
     [Fact]
     public async Task CreateCollectible_ShouldReturnCreatedAtAction()
     {
-        var request = new CreateCollectibleRequest { Name = "A", Location = new Point(2, 1) { SRID = 4326 } };
+        var request = new CreateCollectibleRequest { Name = "A", Latitude = 1, Longitude = 2 };
         var created = new Collectible { Id = 100, Name = "A", Location = new Point(2, 1) { SRID = 4326 } };
 
         var repo = new Mock<ICollectibleRepository>();
@@ -77,7 +77,11 @@ public class CollectiblesControllerTests
 
         var createdAt = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdAt.ActionName.Should().Be(nameof(CollectiblesController.GetCollectibleById));
-        createdAt.Value.Should().Be(created);
+        var payload = createdAt.Value.Should().BeOfType<CollectibleResponse>().Subject;
+        payload.Id.Should().Be(100);
+        payload.Name.Should().Be("A");
+        payload.Latitude.Should().Be(1);
+        payload.Longitude.Should().Be(2);
     }
 
     [Fact]
@@ -118,7 +122,7 @@ public class CollectiblesControllerTests
 
         var controller = new CollectiblesController(repo.Object);
 
-        var result = await controller.UpdateCollectible(3, new UpdateCollectibleRequest { Name = "U", Location = new Point(3, 2) { SRID = 4326 } });
+        var result = await controller.UpdateCollectible(3, new UpdateCollectibleRequest { Name = "U", Latitude = 2, Longitude = 3 });
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.Value.Should().BeOfType<CollectibleResponse>();
