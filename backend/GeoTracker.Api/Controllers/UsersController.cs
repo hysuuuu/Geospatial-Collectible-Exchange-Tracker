@@ -24,8 +24,8 @@ namespace GeoTracker.Api.Controllers
         public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
         {
             var users = await _userRepo.GetAllAsync();
-
             var response = users.Select(u => ToUserResponse(u)).ToList();            
+            
             return Ok(response);
         }
 
