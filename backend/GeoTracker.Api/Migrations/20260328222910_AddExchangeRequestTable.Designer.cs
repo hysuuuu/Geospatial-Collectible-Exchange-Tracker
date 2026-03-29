@@ -3,6 +3,7 @@ using System;
 using GeoTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GeoTracker.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260328222910_AddExchangeRequestTable")]
+    partial class AddExchangeRequestTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,6 +73,12 @@ namespace GeoTracker.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ReceiverUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequestedCollectibleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequestedQuantity")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("ResolvedAt")

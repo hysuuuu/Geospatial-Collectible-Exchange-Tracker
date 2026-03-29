@@ -9,9 +9,10 @@ namespace GeoTracker.Api.Data
         {
         }
 
-        public DbSet<User> Users {get; set;}
-        public DbSet<Collectible> Collectibles {get; set;}
-        public DbSet<UserInventory> UserInventories {get; set;}
+        public DbSet<User> Users { get; set; }
+        public DbSet<Collectible> Collectibles { get; set; }
+        public DbSet<UserInventory> UserInventories { get; set; }
+        public DbSet<ExchangeRequest> ExchangeRequests { get; set; }
         
         // Composite Unique Index
         protected override void OnModelCreating(ModelBuilder modelBuilder)

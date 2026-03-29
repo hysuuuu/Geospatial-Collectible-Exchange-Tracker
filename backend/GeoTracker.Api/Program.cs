@@ -58,6 +58,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICollectibleRepository, CollectibleRepository>();
 builder.Services.AddScoped<IUserInventoryRepository, UserInventoryRepository>();
+builder.Services.AddScoped<IExchangeRequestRepository, ExchangeRequestRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 
 builder.Services.AddSwaggerGen(c =>
